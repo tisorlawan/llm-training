@@ -1,0 +1,30 @@
+package templates
+
+import "app/pkg"
+import "app/pkg/config"
+import "app/pkg/api"
+
+templ Home(
+	config *config.Configuration,
+	models []api.Model,
+	messages []pkg.Message,
+	currentImageID string,
+) {
+	@Page("Home") {
+		<div class="bg-gray-100 h-screen flex">
+			<div class="w-[300px] px-2 py-2 bg-white shadow shadow-gray-400 z-10">
+				@Configuration(config, models)
+			</div>
+			<div class="flex flex-grow">
+				<div class="flex w-full">
+					<div class="bg-gray-50 p-2 px-3 w-1/2">
+						@Chat(messages)
+					</div>
+					<div class="bg-blue-50 p-2 w-1/2">
+						@Images(currentImageID)
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}

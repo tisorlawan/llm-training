@@ -1,0 +1,126 @@
+package templates
+
+import "app/pkg"
+
+templ Chat(messages []pkg.Message) {
+	<div class="flex flex-col h-full">
+		<h1 class="font-bold text-xl pb-4">Chat</h1>
+		<div class="flex flex-col justify-around overflow-y-hidden flex-grow">
+			<div class="h-full border bg-white shadow shadow-gray-400 border-gray-400 rounded-none p-2 flex-shrink overflow-y-auto">
+				<div
+					id="chatbox"
+					class="flex flex-col gap-1"
+					_={ `
+on load
+js(me)
+	var element = document.getElementById('end-history');
+	setTimeout(() => {
+		element.scrollIntoView({"behavior": "smooth"});
+	}, 10)
+end
+
+					` }
+				>
+					for _, msg := range messages {
+						if msg.AudioSrc != "" {
+							@Audio(msg.AudioSrc)
+						}
+						@ChatBubble(msg, msg.Timestamp.String())
+					}
+					<div id="end-history" class="invisible"></div>
+				</div>
+			</div>
+			<form
+				class="h-30 mt-2"
+				hx-post="/chat"
+				hx-target="#chatbox"
+				hx-swap="beforeend show:bottom"
+				_="on submit get the first <input/> in me then set its value to ''"
+			>
+				<input
+					name="message"
+					type="text"
+					id="message"
+					placeholder="Type your message here"
+					class="w-full bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-none focus:ring-blue-500 focus:border-blue-500 p-2.5"
+					spellcheck="false"
+					autofocus
+					autocomplete="off"
+				/>
+			</form>
+		</div>
+	</div>
+}
+
+templ ChatBubble(msg pkg.Message, id string) {
+	if msg.IsUser {
+		<div
+			class="msg bg-gray-800 text-white w-fit max-w-[400px] p-2 rounded-sm self-end "
+		>
+			{ msg.Text }
+		</div>
+	} else {
+		<div
+			class="msg bg-green-300 w-fit max-w-[400px] p-2 rounded-sm"
+		>
+			{ msg.Text }
+		</div>
+	}
+}
+
+templ Audio(src string) {
+	<audio controls autoplay>
+		<source src={ src } type="video/webm"/>
+	</audio>
+}
+
+templ ChatWithAudio(src string, message string, id string) {
+	<div
+		id={ id }
+		hx-swap-oob="true"
+		class="msg bg-green-300 w-fit max-w-[400px] p-2 rounded-sm"
+	>
+		{ message }
+	</div>
+	@Audio(src)
+}
+
+templ ChatBubbleWithAnswer(msg pkg.Message, id string) {
+	@ChatBubble(msg, msg.Timestamp.String())
+	<div
+		class="hidden"
+		_={ `on load
+socket MySocket ws://localhost:3000/answer/` + id + `
+on message
+	if :content === undefined then set :content to '' end
+	set endId to 'end-`+id+`'
+	set id to '`+id+`'
+	set :content to :content + message then
+	set content to :content then
+	js(me, endId)
+			var element = document.getElementById(endId);
+			setTimeout(() => {
+				element.scrollIntoView();
+			}, 100)
+	end
+	put :content into #` + id +`
+	js(me, content, id)
+		var splits = content.split("_")
+		if (splits.length === 2 && splits[0] === "[IMAGE]") {
+		  htmx.trigger("#images", "click");
+		  document.getElementById(id).textContent="Currently generating the image ...";
+		}
+		if (splits.length === 2 && splits[0] === "[AUDIO]") {
+		  htmx.trigger("#audio", "click");
+		  document.getElementById(id).textContent="";
+		}
+	end
+	` }
+	></div>
+	<div id="audio" hx-get={ "/audio/" + id } hx-swap="outerHTML"></div>
+	<div
+		id={ id }
+		class="msg bg-green-300 w-fit max-w-[400px] p-2 rounded-sm"
+	></div>
+	<div id={ "end-" + id } class="invisible inset-0"></div>
+}

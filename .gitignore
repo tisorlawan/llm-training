@@ -1,0 +1,11 @@
+*.webm
+TODO.md
+code-examples
+.ipynb_checkpoints
+whisper.cpp
+notes.md
+main.py
+tests
+4_openai_image-gen/images
+chart.png
+app/images/*

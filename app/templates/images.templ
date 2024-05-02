@@ -1,0 +1,63 @@
+package templates
+
+import "strings"
+
+templ Images(currentImageID string) {
+	if currentImageID == "" {
+		@ImageContainer()
+	} else if strings.HasPrefix(currentImageID, "images") {
+		@ImageReady(currentImageID, "")
+	} else {
+		@ImageLoading()
+	}
+}
+
+templ ImageContainer() {
+	<div
+		class="flex flex-col h-full"
+		id="images"
+		hx-get="/current-image"
+		hx-swap="outerHTML"
+	>
+		<div
+			class="flex-grow"
+		>
+			<div class="h-full w-full flex flex-col p-2 justify-center items-center">
+				{ children... }
+			</div>
+		</div>
+	</div>
+}
+
+templ ImageLoading() {
+	<div
+		class="flex flex-col h-full"
+		id="images"
+		hx-get="/current-image"
+		hx-swap="outerHTML"
+		hx-trigger="every 1s"
+	>
+		<div
+			class="flex-grow"
+		>
+			<div class="h-full w-full flex flex-col p-2 justify-center items-center text-4xl font-bold text-gray-700">
+				Generating Image ...
+			</div>
+		</div>
+	</div>
+}
+
+templ ImageReady(src string, oldImageId string) {
+	if oldImageId != "" {
+		<div
+			id={ oldImageId }
+			hx-swap-oob="true"
+			class="msg bg-green-300 w-fit max-w-[400px] p-2 rounded-sm"
+		>
+			Image generated successfully!
+		</div>
+	}
+	@ImageContainer() {
+		<img src={ src } class="h-full"/>
+	}
+}

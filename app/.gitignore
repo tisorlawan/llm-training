@@ -1,0 +1,9 @@
+*_templ.go
+*_templ.txt
+node_modules
+tmp/*
+*.gz
+content
+bin
+.vscode
+images
